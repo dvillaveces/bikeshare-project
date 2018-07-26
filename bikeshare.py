@@ -8,18 +8,19 @@ CITY_DATA = { 'chicago': 'chicago.csv',
 
 def get_filters():
     """
-    Asks user to specify a city, month, and day to analyze.
+    Asks user to specify cities, month, and day to analyze.
 
     Returns:
-        (str) city - name of the city to analyze
+        (list) cities - list containing names of the cities to analyze
         (str) month - name of the month to filter by, or "all" to apply no month filter
         (str) day - name of the day of week to filter by, or "all" to apply no day filter
     """
     print('\nHello! Let\'s explore some US bikeshare data!')
+    print('\nWe will start by filtering the data. If you want to compare two cities, enter their names separated by a comma. If you want to explore a single city just type its name.\n')
     # get user input for city (chicago, new york city, washington). HINT: Use a while loop to handle invalid inputs
-    city = ''
-    while city != 'chicago' and city != 'new york city' and city != 'washington':
-        city = input('Which city would you like to explore? (Chicago, New York City, Washington): ').lower()
+    cities = set('a')
+    while not cities.issubset(CITY_DATA) or len(cities) > 2:
+        cities = set(map(str.strip, input('Which city would you like to explore? (Chicago, New York City, Washington): ').lower().split(',')))
 
     # get user input for month (all, january, february, ... , june)
     month = ''
@@ -32,22 +33,22 @@ def get_filters():
         day = input('Which day of week should I filter by? (all, Monday, Tuesday, ... , Sunday): ').lower()
 
     print('-'*40)
-    return city, month, day
+    return list(cities), month, day
 
 
-def load_data(city, month, day):
+def load_data(cities, month, day):
     """
     Loads data for the specified city and filters by month and day if applicable.
 
     Args:
-        (str) city - name of the city to analyze
+        (list) cities - list containing names of the cities to analyze
         (str) month - name of the month to filter by, or "all" to apply no month filter
         (str) day - name of the day of week to filter by, or "all" to apply no day filter
     Returns:
         df - Pandas DataFrame containing city data filtered by month and day
     """
     # load data file into a dataframe
-    df = pd.read_csv(CITY_DATA[city])
+    df = pd.read_csv(CITY_DATA[cities[0]])
 
     # convert the Start Time column to datetime
     df['Start Time'] = pd.to_datetime(df['Start Time'])
@@ -147,7 +148,7 @@ def trip_duration_stats(df):
     print('-'*40)
 
 
-def user_stats(df,city):
+def user_stats(df,cities):
     """Displays statistics on bikeshare users."""
 
     print('\nCalculating User Stats...\n')
@@ -158,7 +159,7 @@ def user_stats(df,city):
     print('Subscribers:',user_types['Subscriber'],'\n'+'Customers:',user_types['Customer'],'\n')
 
     # if city is Washington, indicate that no gender or birth year data is available
-    if city == 'washington':
+    if cities[0] == 'washington':
         print('Gender and birth year data are not available for Washington.')
     else:
         # Display counts of gender
@@ -178,13 +179,13 @@ def user_stats(df,city):
 
 def main():
     while True:
-        city, month, day = get_filters()
-        df = load_data(city, month, day)
+        cities, month, day = get_filters()
+        df = load_data(cities, month, day)
 
         time_stats(df)
         station_stats(df)
         trip_duration_stats(df)
-        user_stats(df, city)
+        user_stats(df, cities)
 
         restart = input('\nWould you like to restart? Enter yes or no.\n')
         if restart.lower() != 'yes':
