@@ -45,17 +45,10 @@ def load_data(cities, month, day):
         (str) month - name of the month to filter by, or "all" to apply no month filter
         (str) day - name of the day of week to filter by, or "all" to apply no day filter
     Returns:
-        df - Pandas DataFrame containing city data filtered by month and day
+        dfs - list of Pandas DataFrame containing city data filtered by month and day
     """
-    # load data file into a dataframe
-    df = pd.read_csv(CITY_DATA[cities[0]])
-
-    # convert the Start Time column to datetime
-    df['Start Time'] = pd.to_datetime(df['Start Time'])
-
-    # extract month and day of week from Start Time to create new columns
-    df['month'] = df['Start Time'].dt.month
-    df['day_of_week'] = df['Start Time'].dt.weekday_name
+    # load data file into a list of dataframes
+    dfs = [pd.read_csv(CITY_DATA[city]) for city in cities]
 
     # filter by month if applicable
     if month != 'all':
@@ -63,15 +56,23 @@ def load_data(cities, month, day):
         months = ['january', 'february', 'march', 'april', 'may', 'june']
         month = months.index(month) + 1
 
+    # for each df, convert the Start Time column to datetime
+    for i in range(len(dfs)):
+        dfs[i]['Start Time'] = pd.to_datetime(dfs[i]['Start Time'])
+
+        # extract month and day of week from Start Time to create new columns
+        dfs[i]['month'] = dfs[i]['Start Time'].dt.month
+        dfs[i]['day_of_week'] = dfs[i]['Start Time'].dt.weekday_name
+
         # filter by month to create the new dataframe
-        df = df[df['month'] == month]
+        dfs[i] = dfs[i][dfs[i]['month'] == month]
 
-    # filter by day of week if applicable
-    if day != 'all':
-        # filter by day to create the new dataframe
-        df = df[df['day_of_week'] == day.title()]
-
-    return df
+        # filter by day of week if applicable
+        if day != 'all':
+            # filter by day to create the new dataframe
+            dfs[i] = dfs[i][dfs[i]['day_of_week'] == day.title()]
+    
+    return dfs
 
 
 def time_stats(df):
@@ -180,12 +181,12 @@ def user_stats(df,cities):
 def main():
     while True:
         cities, month, day = get_filters()
-        df = load_data(cities, month, day)
+        dfs = load_data(cities, month, day)
 
-        time_stats(df)
-        station_stats(df)
-        trip_duration_stats(df)
-        user_stats(df, cities)
+        time_stats(dfs[0])
+        station_stats(dfs[0])
+        trip_duration_stats(dfs[0])
+        user_stats(dfs[0], cities)
 
         restart = input('\nWould you like to restart? Enter yes or no.\n')
         if restart.lower() != 'yes':
