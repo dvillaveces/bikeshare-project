@@ -2,9 +2,9 @@ import time
 import pandas as pd
 import numpy as np
 
-CITY_DATA = { 'chicago': 'chicago.csv',
-              'new york city': 'new_york_city.csv',
-              'washington': 'washington.csv' }
+CITY_DATA = { 'chicago': ['chicago.csv', 2704958],
+              'new york city': ['new_york_city.csv', 8537673],
+              'washington': ['washington.csv', 681170]}
 
 def get_filters():
     """
@@ -48,7 +48,7 @@ def load_data(cities, month, day):
         dfs - list of Pandas DataFrame containing city data filtered by month and day
     """
     # load data file into a list of dataframes
-    dfs = [pd.read_csv(CITY_DATA[city]) for city in cities]
+    dfs = [pd.read_csv(CITY_DATA[city][0]) for city in cities]
 
     # filter by month if applicable
     if month != 'all':
@@ -198,7 +198,9 @@ def comparison_stats(dfs, cities):
     # display total trips comparison for each city
     for city, df in zip(cities, dfs):
         tot_trips = df.shape[0]
+        trips_per_100k = (tot_trips / CITY_DATA[city][1]) * 100000
         print('{} took {} total trips.'.format(city.title(), tot_trips))
+        print('That is {} trips per 100.000 inhabitants!'.format(round(trips_per_100k)))
 
     print()
 
