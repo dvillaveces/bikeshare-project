@@ -65,13 +65,14 @@ def load_data(cities, month, day):
         dfs[i]['day_of_week'] = dfs[i]['Start Time'].dt.weekday_name
 
         # filter by month to create the new dataframe
-        dfs[i] = dfs[i][dfs[i]['month'] == month]
+        if month != 'all':
+            dfs[i] = dfs[i][dfs[i]['month'] == month]
 
         # filter by day of week if applicable
         if day != 'all':
             # filter by day to create the new dataframe
             dfs[i] = dfs[i][dfs[i]['day_of_week'] == day.title()]
-    
+
     return dfs
 
 
@@ -178,15 +179,53 @@ def user_stats(df,cities):
     print('-'*40)
 
 
+def comparison_stats(dfs, cities):
+    """Displays comparison statistics between two cities."""
+
+    print('\nCalculating Comparison Stats...\n')
+    start_time = time.time()
+
+    # display mean travel time comparison for each city
+    for city, df in zip(cities, dfs):
+        # access mean time in seconds
+        mean_time = df['Trip Duration'].mean()
+        # convert mean time to minutes and seconds
+        m, s = divmod(mean_time, 60)
+        print('Mean trip time for {} was: {} minutes and {} seconds'.format(city.title(), int(m), int(round(s))))
+
+    print()
+
+    # display total trips comparison for each city
+    for city, df in zip(cities, dfs):
+        tot_trips = df.shape[0]
+        print('{} took {} total trips.'.format(city.title(), tot_trips))
+
+    print()
+
+    # display gender comparison for each city
+    for city, df in zip(cities, dfs):
+        if city == 'washington':
+            print('No gender data are available for Washington.')
+        else:
+            genders = df['Gender'].value_counts()
+            female_ratio = round((genders['Female'] / (genders['Female'] + genders['Male'])) * 100, 2)
+            print('In {}, {}% of trips were taken by women.'.format(city.title(), female_ratio))
+
+    print("\nThis took %s seconds." % (time.time() - start_time))
+    print('-'*40)
+
+
 def main():
     while True:
         cities, month, day = get_filters()
         dfs = load_data(cities, month, day)
-
-        time_stats(dfs[0])
-        station_stats(dfs[0])
-        trip_duration_stats(dfs[0])
-        user_stats(dfs[0], cities)
+        if len(dfs) == 1:
+            time_stats(dfs[0])
+            station_stats(dfs[0])
+            trip_duration_stats(dfs[0])
+            user_stats(dfs[0], cities)
+        else:
+            comparison_stats(dfs, cities)
 
         restart = input('\nWould you like to restart? Enter yes or no.\n')
         if restart.lower() != 'yes':
